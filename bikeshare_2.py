@@ -16,7 +16,7 @@ Notes:
 
 """ 
 
-CITY_DATA = { 'Chicago': '/Users/edwardchen/Udacity/Python/all-project-files/chicago.csv',
+CITY_DATA = { 'Chicago': '/Users/edwardchen/Documents/bikeshare-project/chicago.csv',
               'New York City': '/Users/edwardchen/Udacity/Python/all-project-files/new_york_city.csv',
               'Washington': '/Users/edwardchen/Udacity/Python/all-project-files/washington.csv' }
 
