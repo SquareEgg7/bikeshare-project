@@ -108,10 +108,6 @@ def format_duration(seconds):
 st.write(f"**Total Travel Time:** {format_duration(total_seconds)}")
 st.write(f"**Average Trip Duration:** {format_duration(mean_seconds)}")
 
-# Raw data at the bottom - optional viewing
-with st.expander("View raw data"):
-    st.dataframe(df)
-
 # User statistics
 st.subheader("User Statistics")
 
@@ -141,3 +137,8 @@ if 'Gender' in df.columns:
     st.write(f"**Not specified:** {no_birth_year:,}")
 else:
     st.write("*Gender and birth year data not available for Washington.*")
+
+st.divider()
+# Raw data at the bottom - optional viewing
+with st.expander("View raw data"):
+    st.dataframe(df)
