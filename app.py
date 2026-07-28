@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+def trip_label(n):
+    return f"{n:,} trip" if n == 1 else f"{n:,} trips"
+
 # Global CSS
 st.markdown("""
 <style>
@@ -85,7 +88,7 @@ pct = filtered_trips / total_trips * 100
 month_label = month if month != "All" else "All Months"
 day_label = day + "s" if day != "All" else "All Days"
 
-st.write(f"Showing **{filtered_trips:,}** trips for **{city}** — {month_label}, {day_label} — representing **{pct:.1f}%** of the {total_trips:,} total trips in the {city} dataset.")
+st.write(f"Showing **{trip_label(filtered_trips)}** for **{city}** — {month_label}, {day_label} — representing **{pct:.1f}%** of the {trip_label(total_trips)} in the {city} dataset.")
 
 # Build all three dataframes:
 month_order = ['January', 'February', 'March', 'April', 'May', 'June']
@@ -219,7 +222,7 @@ st.markdown("**User Types**")
 user_type_data = df['User Type'].fillna('Not Specified').value_counts().reset_index()
 user_type_data.columns = ['User Type', 'Trips']
 user_type_data['Label'] = user_type_data.apply(
-    lambda row: f"{row['User Type']} - {row['Trips']:,} trips", axis=1)
+    lambda row: f"{row['User Type']} — {trip_label(row['Trips'])}", axis=1)
 
 fig_user = px.pie(user_type_data, values='Trips', names='Label',
                   color_discrete_sequence=['#C4622D', '#DBA088', '#E8C4B0'])
@@ -241,7 +244,7 @@ fig_user.update_layout(
 fig_user.update_traces(
     textposition='inside',
     texttemplate='%{percent:.1%}',
-    hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>'
+    hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>'
 )
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
@@ -255,7 +258,7 @@ if 'Gender' in df.columns:
     gender_data = gender_data.reindex(gender_order).reset_index()
     gender_data.columns = ['Gender', 'Trips']
     gender_data['Label'] = gender_data.apply(
-        lambda row: f"{row['Gender']} - {row['Trips']:,} trips", axis=1)
+        lambda row: f"{row['Gender']} — {trip_label(row['Trips'])}", axis=1)
 
     fig_gender = px.pie(gender_data, values='Trips', names='Label',
                         color_discrete_sequence=['#C4622D', '#DBA088', '#E8C4B0'])
@@ -277,7 +280,7 @@ if 'Gender' in df.columns:
     fig_gender.update_traces(
         textposition='inside',
         texttemplate='%{percent:.1%}',
-        hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>'
+        hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>'
     )
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
