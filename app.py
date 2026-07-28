@@ -135,7 +135,7 @@ fig_month.update_layout(width=600,
                         margin=dict(l=10, r=10, t=10, b=10),
                         font=dict(family='DM Sans')
                         )
-fig_month.update_traces(hovertemplate='%{x}<br>Rides: %{y:,}<extra></extra>')
+fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
 st.plotly_chart(fig_month)
 st.caption("Note: Dataset covers January–June 2017 only.")
 
@@ -152,7 +152,7 @@ fig_day.update_layout(showlegend=False,
                       margin=dict(l=10, r=10, t=10, b=10),
                       font=dict(family='DM Sans')
                       )
-fig_day.update_traces(hovertemplate='%{x}<br>Rides: %{y:,}<extra></extra>')
+fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
 st.plotly_chart(fig_day)
 
 # Hour Distribution
@@ -170,7 +170,7 @@ fig_hour.update_layout(showlegend=False,
                   margin=dict(l=10, r=10, t=10, b=10),
                   font=dict(family='DM Sans')
                   )
-fig_hour.update_traces(hovertemplate='%{x}<br>Rides: %{y:,}<extra></extra>')
+fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
 st.plotly_chart(fig_hour)
 
 # Most popular stations
@@ -240,8 +240,8 @@ fig_user.update_layout(
 )
 fig_user.update_traces(
     textposition='inside',
-    textinfo='percent',
-    hovertemplate='%{label}<br>%{percent:.1f}<extra></extra>'
+    texttemplate='%{percent:.1%}',
+    hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>'
 )
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
@@ -276,8 +276,8 @@ if 'Gender' in df.columns:
     )
     fig_gender.update_traces(
         textposition='inside',
-        textinfo='percent',
-        hovertemplate='%{label}<br>%{percent:.1f}<extra></extra>'
+        texttemplate='%{percent:.1%}',
+        hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>'
     )
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
@@ -306,7 +306,7 @@ if 'Gender' in df.columns:
         margin=dict(l=10, r=10, t=10, b=10),
         font=dict(family='DM Sans')
     )
-    fig_birth.update_traces(hovertemplate='%{x}<br>Rides: %{y:,}<extra></extra>')
+    fig_birth.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
     most_common_count = birth_counts.loc[birth_counts['Year'] == most_common, 'Rides'].values[0]
     fig_birth.add_annotation(
         x=most_common,
