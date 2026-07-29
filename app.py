@@ -2,8 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+st.set_page_config(layout="wide", page_title="US Bikeshare Data Explorer")
+
+# Helper function
 def trip_label(n):
     return f"{n:,} trip" if n == 1 else f"{n:,} trips"
+
+# City data
+CITY_DATA = {
+    'Chicago': 'chicago.csv',
+    'New York City': 'new_york_city.csv',
+    'Washington': 'washington.csv'
+}
 
 # Global CSS
 st.markdown("""
@@ -18,30 +28,21 @@ html, body, [class*="css"], p, div, span, label, input {
     background-color: #FAFAF8;
 }
 
-h1 {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 600;
-    color: #2C3A2E;
-    letter-spacing: -0.3px;
-}
-
-h2, h3 {
-    font-family: 'DM Sans', sans-serif;
-    font-weight: 500;
-    color: #2C3A2E;
-}
-
 [data-testid="stIconMaterial"] {
     display: none !important;
 }
 
-[data-testid="stExpander"] [data-testid="stMarkdownContainer"] {
-    text-align: left !important;
-    padding-left: 0 !important;
+[data-testid="stBaseButton-pillsActive"] {
+    background-color: #C4622D !important;
+    border-color: #C4622D !important;
+    color: white !important;
 }
 
 </style>
 """, unsafe_allow_html=True)
+
+# Title
+st.title("US Bikeshare Data Explorer")
 
 CITY_DATA = {
     'Chicago': 'chicago.csv',
@@ -49,23 +50,14 @@ CITY_DATA = {
     'Washington': 'washington.csv'
 }
 
-st.title("US Bikeshare Data Explorer")
-st.write("Explore bikeshare usage patterns across Chicago, New York City, or Washington DC.")
+# Filter bar
+city = st.pills("City", list(CITY_DATA.keys()), default="Chicago")
 
-# Filters
-col1, col2, col3 = st.columns(3)
+months = ["January", "February", "March", "April", "May", "June"]
+month = st.pills("Month", ["All"] + months, default="All")
 
-with col1:
-    city = st.selectbox("Select a city:", list(CITY_DATA.keys()))
-
-with col2:
-    month = st.selectbox("Select a month:", 
-        ["All", "January", "February", "March", "April", "May", "June"])
-
-with col3:
-    day = st.selectbox("Select a day:", 
-        ["All", "Monday", "Tuesday", "Wednesday", 
-         "Thursday", "Friday", "Saturday", "Sunday"])
+days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+day = st.pills("Day", ["All"] + days, default="All")
 
 # Load data
 df = pd.read_csv(CITY_DATA[city])
@@ -80,15 +72,8 @@ if month != "All":
 if day != "All":
     df = df[df['Day of Week'] == day]
 
-# Summary line
-total_trips = pd.read_csv(CITY_DATA[city]).shape[0]
-filtered_trips = len(df)
-pct = filtered_trips / total_trips * 100
-
 month_label = month if month != "All" else "All Months"
 day_label = day + "s" if day != "All" else "All Days"
-
-st.write(f"Showing **{trip_label(filtered_trips)}** for **{city}** — {month_label}, {day_label} — representing **{pct:.1f}%** of the {trip_label(total_trips)} in the {city} dataset.")
 
 # Build all three dataframes:
 month_order = ['January', 'February', 'March', 'April', 'May', 'June']
@@ -122,83 +107,96 @@ max_rides = max(
     hour_counts['Rides'].max()
 ) * 1.1  # 10% headroom above the tallest bar
 
-# Draw 3 charts
+# Dashboard layout - Row 1 - Trip Analysis (Month, Day, Hour)
+col1, col2, col3 = st.columns(3)
 
-# # Month distribution
-st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Month (by Trips)</p>', unsafe_allow_html=True)
-
-fig_month = px.bar(month_counts, x='Month', y='Rides',
-                   color='Color', color_discrete_map='identity')
-fig_month.update_xaxes(tickangle=-60, title_text="")
-fig_month.update_yaxes(title_text="", range=[0, max_rides])
-fig_month.update_layout(width=600,
-                        showlegend=False, 
-                        plot_bgcolor='rgba(0,0,0,0)',
-                        paper_bgcolor='rgba(0,0,0,0)',
-                        margin=dict(l=10, r=10, t=10, b=10),
-                        font=dict(family='DM Sans')
-                        )
-fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
-st.plotly_chart(fig_month)
-st.caption("Note: Dataset covers January–June 2017 only.")
+# Month Distribution
+with col1:
+    st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Month (by Trips)</p>', unsafe_allow_html=True)
+    fig_month = px.bar(month_counts, x='Month', y='Rides',
+                       color='Color', color_discrete_map='identity',
+                       category_orders={'Month': month_order})
+    fig_month.update_xaxes(tickangle=-60, title_text="")
+    fig_month.update_yaxes(title_text="", range=[0, max_rides])
+    fig_month.update_layout(yaxis=dict(domain=[0.25, 1.0]),
+                            showlegend=False,
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            margin=dict(l=10, r=10, t=10, b=80),
+                            font=dict(family='DM Sans'))
+    fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+    st.plotly_chart(fig_month, use_container_width=True)
 
 # Day Distribution
-st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Day of Week (by Trips)</p>', unsafe_allow_html=True)
-
-fig_day = px.bar(day_counts, x='Day', y='Rides',
-                 color='Color', color_discrete_map='identity', category_orders={'Day': day_order})
-fig_day.update_xaxes(tickangle=-60, title_text="")
-fig_day.update_yaxes(title_text="", range=[0, max_rides])
-fig_day.update_layout(showlegend=False,
-                      plot_bgcolor='rgba(0,0,0,0)',
-                      paper_bgcolor='rgba(0,0,0,0)',
-                      margin=dict(l=10, r=10, t=10, b=10),
-                      font=dict(family='DM Sans')
-                      )
-fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
-st.plotly_chart(fig_day)
+with col2:
+    st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Day of Week (by Trips)</p>', unsafe_allow_html=True)
+    fig_day = px.bar(day_counts, x='Day', y='Rides',
+                     color='Color', color_discrete_map='identity',
+                     category_orders={'Day': day_order})
+    fig_day.update_xaxes(tickangle=-60, title_text="")
+    fig_day.update_yaxes(title_text="", range=[0, max_rides])
+    fig_day.update_layout(yaxis=dict(domain=[0.25, 1.0]),
+                          showlegend=False,
+                          plot_bgcolor='rgba(0,0,0,0)',
+                          paper_bgcolor='rgba(0,0,0,0)',
+                          margin=dict(l=10, r=10, t=10, b=80),
+                          font=dict(family='DM Sans'))
+    fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+    st.plotly_chart(fig_day, use_container_width=True)
 
 # Hour Distribution
-st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most popular hour (by Trips)</p>', unsafe_allow_html=True)
+with col3:
+    st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Hour (by Trips)</p>', unsafe_allow_html=True)
 
-fig_hour = px.bar(hour_counts, x='Hour Label', y='Rides',
-             color='Color',
-             color_discrete_map='identity',
-             category_orders={'Hour Label': hour_counts['Hour Label'].tolist()})
-fig_hour.update_xaxes(tickangle=-60, title_text="")
-fig_hour.update_yaxes(title_text="", range=[0, max_rides])
-fig_hour.update_layout(showlegend=False,
-                  plot_bgcolor='rgba(0,0,0,0)',
-                  paper_bgcolor='rgba(0,0,0,0)',
-                  margin=dict(l=10, r=10, t=10, b=10),
-                  font=dict(family='DM Sans')
-                  )
-fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
-st.plotly_chart(fig_hour)
+    fig_hour = px.bar(hour_counts, x='Hour Label', y='Rides',
+                color='Color',
+                color_discrete_map='identity',
+                category_orders={'Hour Label': hour_counts['Hour Label'].tolist()})
+    fig_hour.update_xaxes(tickangle=-60, title_text="", dtick=2)
+    fig_hour.update_yaxes(title_text="", range=[0, max_rides])
+    fig_hour.update_layout(yaxis=dict(domain=[0.25, 1.0]),
+                           showlegend=False,
+                           plot_bgcolor='rgba(0,0,0,0)',
+                           paper_bgcolor='rgba(0,0,0,0)',
+                           margin=dict(l=10, r=10, t=10, b=80),
+                           font=dict(family='DM Sans')
+                           )
+    fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+    st.plotly_chart(fig_hour)
 
-# Most popular stations
-st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most popular stations</p>', unsafe_allow_html=True)
+# Dashboard layout - Row 2 - Trip Analysis (Summary stats, popular stations, trip duration)
+col4, col5, col6 = st.columns(3)
 
+# Summary Stats
+total_trips = pd.read_csv(CITY_DATA[city]).shape[0]
+filtered_trips = len(df)
+pct = filtered_trips / total_trips * 100
+
+with col4:
+    st.markdown(f"<p style='font-size:3rem;font-weight:600;color:#C4622D;margin:0;'>{filtered_trips:,}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:1rem;color:#555;margin-top:-15px;'>trips for {city}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:0.8rem;color:#999;margin-top:-10px;'>{month_label} · {day_label} · {pct:.1f}% of dataset</p>", unsafe_allow_html=True)
+
+# Popular Stations/trips
 start_station = df['Start Station'].value_counts().index[0]
 end_station = df['End Station'].value_counts().index[0]
 most_common_trip = (df['Start Station'] + " → " + df['End Station']).value_counts().index[0]
 
-st.markdown("**Most Popular Start Station:**")
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{start_station}</p>", unsafe_allow_html=True)
-
-st.markdown("**Most Popular End Station:**")
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{end_station}</p>", unsafe_allow_html=True)
-
 trip_start = df.groupby(['Start Station', 'End Station']).size().idxmax()[0]
 trip_end = df.groupby(['Start Station', 'End Station']).size().idxmax()[1]
-st.markdown("**Most Popular Trip:**")
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{trip_start}</p>", unsafe_allow_html=True)
-st.markdown(f"<p style='margin-top:-20px;color:#555;font-style:italic;'>to:</p>", unsafe_allow_html=True)
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{trip_end}</p>", unsafe_allow_html=True)
 
-# Trip Duration
-st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Trip Duration</p>', unsafe_allow_html=True)
+with col5:
+    st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Most Popular Stations</p>', unsafe_allow_html=True)
+    st.markdown("**Most Popular Start Station:**")
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{start_station}</p>", unsafe_allow_html=True)
+    st.markdown("**Most Popular End Station:**")
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{end_station}</p>", unsafe_allow_html=True)
+    st.markdown("**Most Popular Trip:**")
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{trip_start}</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-top:-20px;color:#555;font-style:italic;'>to:</p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{trip_end}</p>", unsafe_allow_html=True)
 
+# Trip duration
 total_seconds = df['Trip Duration'].sum()
 mean_seconds = df['Trip Duration'].mean()
 
@@ -208,11 +206,12 @@ def format_duration(seconds):
     else:
         return f"{seconds / 3600:,.1f} hours"
 
-st.markdown("**Total Travel Time:**")
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(total_seconds)}</p>", unsafe_allow_html=True)
-
-st.markdown("**Average Trip Duration:**")
-st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(mean_seconds)}</p>", unsafe_allow_html=True)
+with col6:
+    st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">Trip Duration</p>', unsafe_allow_html=True)
+    st.markdown("**Total Travel Time:**")
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(total_seconds)}</p>", unsafe_allow_html=True)
+    st.markdown("**Average Trip Duration:**")
+    st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(mean_seconds)}</p>", unsafe_allow_html=True)
 
 # User statistics
 st.markdown('<p style="font-size:11px;font-weight:600;color:#2D7D7B;text-transform:uppercase;letter-spacing:0.08em;border-bottom:1.5px solid #2D7D7B;padding-bottom:4px;margin-top:1.5rem;">User statistics</p>', unsafe_allow_html=True)
