@@ -151,24 +151,11 @@ if view == "Trips":
                            color_discrete_map='identity', category_orders={'Month': month_order})
         fig_month.update_xaxes(tickangle=-60, title_text="")
         fig_month.update_yaxes(title_text="", range=[0, max_rides])
-        fig_month.update_layout(height=250, showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
+        fig_month.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                 paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                                 font=dict(family='DM Sans'))
         fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
         st.plotly_chart(fig_month, use_container_width=True, config=CHART_CONFIG)
-
-    with col2:
-        # Most popular day
-        st.markdown(SECTION_HEADER.format("Most Popular Day of Week (by Trips)"), unsafe_allow_html=True)
-        fig_day = px.bar(day_counts, x='Day', y='Rides', color='Color',
-                         color_discrete_map='identity', category_orders={'Day': DAYS})
-        fig_day.update_xaxes(tickangle=-60, title_text="")
-        fig_day.update_yaxes(title_text="", range=[0, max_rides])
-        fig_day.update_layout(height=250, showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
-                              paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
-                              font=dict(family='DM Sans'))
-        fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
-        st.plotly_chart(fig_day, use_container_width=True, config=CHART_CONFIG)
 
         # Most popular stations
         st.markdown(SECTION_HEADER.format("Most Popular Stations"), unsafe_allow_html=True)
@@ -181,6 +168,27 @@ if view == "Trips":
         st.markdown(f"<p style='margin-top:-20px;color:#555;font-style:italic;'>to:</p>", unsafe_allow_html=True)
         st.markdown(f"<p style='margin-top:-20px;color:#555;'>{trip_end}</p>", unsafe_allow_html=True)
 
+    with col2:
+        # Most popular day
+        st.markdown(SECTION_HEADER.format("Most Popular Day of Week (by Trips)"), unsafe_allow_html=True)
+        fig_day = px.bar(day_counts, x='Day', y='Rides', color='Color',
+                         color_discrete_map='identity', category_orders={'Day': DAYS})
+        fig_day.update_xaxes(tickangle=-60, title_text="")
+        fig_day.update_yaxes(title_text="", range=[0, max_rides])
+        fig_day.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
+                              paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
+                              font=dict(family='DM Sans'))
+        fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+        st.plotly_chart(fig_day, use_container_width=True, config=CHART_CONFIG)
+
+        # Trip duration
+        st.markdown(SECTION_HEADER.format("Trip Duration"), unsafe_allow_html=True)
+        st.markdown("**Total Travel Time:**")
+        st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(total_seconds)}</p>", unsafe_allow_html=True)
+        st.markdown("**Average Trip Duration:**")
+        st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(mean_seconds)}</p>", unsafe_allow_html=True)
+
+
     with col3:
         # Most popular hour
         st.markdown(SECTION_HEADER.format("Most Popular Hour (by Trips)"), unsafe_allow_html=True)
@@ -189,18 +197,11 @@ if view == "Trips":
                           category_orders={'Hour Label': hour_counts['Hour Label'].tolist()})
         fig_hour.update_xaxes(tickangle=-60, title_text="", dtick=2)
         fig_hour.update_yaxes(title_text="", range=[0, max_rides])
-        fig_hour.update_layout(height=250, showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
+        fig_hour.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                                font=dict(family='DM Sans'))
         fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
         st.plotly_chart(fig_hour, use_container_width=True, config=CHART_CONFIG)
-
-        # Trip duration
-        st.markdown(SECTION_HEADER.format("Trip Duration"), unsafe_allow_html=True)
-        st.markdown("**Total Travel Time:**")
-        st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(total_seconds)}</p>", unsafe_allow_html=True)
-        st.markdown("**Average Trip Duration:**")
-        st.markdown(f"<p style='margin-top:-20px;color:#555;'>{format_duration(mean_seconds)}</p>", unsafe_allow_html=True)
 
 elif view == "Users":
     
