@@ -62,14 +62,14 @@ html, body, [class*="css"], p, div, span, label, input {
 }
 .stApp { background-color: #FAFAF8; }
 [data-testid="stIconMaterial"] { display: none !important; }
-[data-testid="stBaseButton-pillsActive"],
-[data-testid*="pillsActive"],
-button[kind="pillsActive"],
-.stPills button[aria-pressed="true"] {
+button[data-variant="pills"][data-selected="true"],
+button[data-variant="pills"][aria-checked="true"] {
     background-color: #C4622D !important;
     border-color: #C4622D !important;
     color: white !important;
 }
+
+Why: B
 .stPlotlyChart {
     border-radius: 12px !important;
     overflow: hidden !important;
