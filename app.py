@@ -62,7 +62,10 @@ html, body, [class*="css"], p, div, span, label, input {
 }
 .stApp { background-color: #FAFAF8; }
 [data-testid="stIconMaterial"] { display: none !important; }
-[data-testid="stBaseButton-pillsActive"] {
+[data-testid="stBaseButton-pillsActive"],
+[data-testid*="pillsActive"],
+button[kind="pillsActive"],
+.stPills button[aria-pressed="true"] {
     background-color: #C4622D !important;
     border-color: #C4622D !important;
     color: white !important;
