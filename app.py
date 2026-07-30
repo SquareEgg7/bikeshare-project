@@ -35,10 +35,13 @@ def render_caveats():
         st.markdown("""
 This is a rebuild of the Udacity nd104 capstone project — the dataset and analysis subject were assigned; the dashboard design, UX decisions, and interactive architecture are original.
 
+- **Data:** primary trip-level records from Divvy (Chicago), Citi Bike (New York City), and Capital Bikeshare / CABI (Washington DC), provided via Udacity's nd104 program.
 - Optimized for desktop viewing. Mobile layout reorders content due to Streamlit's column-stacking behavior (known limitation, improvement planned for Streamlit v2.0).
 - Pill selectors were used in place of dropdown menus for improved touch accessibility — larger tap targets, all options visible without scrolling.
 - Charts show marginal distributions only; no cross-tabulation or causal relationships are implied between variables like month, day, and hour.
-""")
+
+<a href="https://github.com/SquareEgg7/bikeshare-project" target="_blank" style="color:#2D7D7B;font-weight:500;text-decoration:none;">View Code & Data →</a>
+""", unsafe_allow_html=True)
         
 # ── CONSTANTS ───────────────────────────────────────────────────
 CITY_DATA = {
@@ -186,14 +189,16 @@ if view == "Trips":
     with col1:
         #Most popular month
         st.markdown(SECTION_HEADER.format("Most Popular Month (by Trips)"), unsafe_allow_html=True)
+        month_counts['Pct'] = month_counts['Rides'] / month_counts['Rides'].sum() * 100
         fig_month = px.bar(month_counts, x='Month', y='Rides', color='Color',
-                           color_discrete_map='identity', category_orders={'Month': month_order})
+                           color_discrete_map='identity', category_orders={'Month': month_order},
+                           custom_data=['Pct'])
         fig_month.update_xaxes(tickangle=-60, title_text="", automargin=False)
         fig_month.update_yaxes(title_text="", range=[0, max_rides])
         fig_month.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                 paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                                 font=dict(family='DM Sans'))
-        fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+        fig_month.update_traces(hovertemplate='%{x}<br>%{y:,} trips (%{customdata[0]:.1f}%)<extra></extra>')
         st.plotly_chart(fig_month, use_container_width=True, config=CHART_CONFIG)
 
         # Most popular stations
@@ -210,14 +215,16 @@ if view == "Trips":
     with col2:
         # Most popular day
         st.markdown(SECTION_HEADER.format("Most Popular Day of Week (by Trips)"), unsafe_allow_html=True)
+        day_counts['Pct'] = day_counts['Rides'] / day_counts['Rides'].sum() * 100
         fig_day = px.bar(day_counts, x='Day', y='Rides', color='Color',
-                         color_discrete_map='identity', category_orders={'Day': DAYS})
+                         color_discrete_map='identity', category_orders={'Day': DAYS},
+                         custom_data=['Pct'])
         fig_day.update_xaxes(tickangle=-60, title_text="", automargin=False)
         fig_day.update_yaxes(title_text="", range=[0, max_rides])
         fig_day.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                               paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                               font=dict(family='DM Sans'))
-        fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+        fig_day.update_traces(hovertemplate='%{x}<br>%{y:,} trips (%{customdata[0]:.1f}%)<extra></extra>')
         st.plotly_chart(fig_day, use_container_width=True, config=CHART_CONFIG)
 
         # Trip duration
@@ -231,15 +238,17 @@ if view == "Trips":
     with col3:
         # Most popular hour
         st.markdown(SECTION_HEADER.format("Most Popular Hour (by Trips)"), unsafe_allow_html=True)
+        hour_counts['Pct'] = hour_counts['Rides'] / hour_counts['Rides'].sum() * 100
         fig_hour = px.bar(hour_counts, x='Hour Label', y='Rides', color='Color',
                           color_discrete_map='identity',
-                          category_orders={'Hour Label': hour_counts['Hour Label'].tolist()})
+                          category_orders={'Hour Label': hour_counts['Hour Label'].tolist()},
+                          custom_data=['Pct'])
         fig_hour.update_xaxes(tickangle=-60, title_text="", dtick=2, automargin=False)
         fig_hour.update_yaxes(title_text="", range=[0, max_rides])
         fig_hour.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                                font=dict(family='DM Sans'))
-        fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+        fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips (%{customdata[0]:.1f}%)<extra></extra>')
         st.plotly_chart(fig_hour, use_container_width=True, config=CHART_CONFIG)
         st.markdown("<div style='padding-top:2.9rem;'>", unsafe_allow_html=True)
         render_caveats()
@@ -260,7 +269,7 @@ elif view == "Users":
                            plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                            margin=dict(l=10, r=10, t=10, b=10), font=dict(family='DM Sans'))
     fig_user.update_traces(textposition='inside', texttemplate='%{percent:.1%}',
-                           hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>')
+                           hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>')
 
     has_gender = 'Gender' in df.columns
     has_birth_year = 'Birth Year' in df.columns
@@ -280,7 +289,7 @@ elif view == "Users":
                                  plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                                  margin=dict(l=10, r=10, t=10, b=10), font=dict(family='DM Sans'))
         fig_gender.update_traces(textposition='inside', texttemplate='%{percent:.1%}',
-                                 hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>')
+                                 hovertemplate='%{label}<br>%{percent:.1%}<extra></extra>')
 
         pie_col1, pie_col2 = st.columns(2)
         with pie_col1:
@@ -306,13 +315,15 @@ elif view == "Users":
             birth_counts = df['Birth Year'].dropna().astype(int).value_counts().sort_index().reset_index()
             birth_counts.columns = ['Year', 'Rides']
             birth_counts['Color'] = birth_counts['Year'].apply(lambda x: '#C4622D' if x == most_common else '#DBA088')
+            birth_counts['Pct'] = birth_counts['Rides'] / birth_counts['Rides'].sum() * 100
 
-            fig_birth = px.bar(birth_counts, x='Year', y='Rides', color='Color', color_discrete_map='identity')
+            fig_birth = px.bar(birth_counts, x='Year', y='Rides', color='Color', color_discrete_map='identity',
+                               custom_data=['Pct'])
             fig_birth.update_xaxes(tickangle=-60, title_text="")
             fig_birth.update_yaxes(title_text="", range=[0, birth_counts['Rides'].max() * 1.2])
             fig_birth.update_layout(height=200, showlegend=False, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
                                     margin=dict(l=10, r=10, t=30, b=10), font=dict(family='DM Sans'))
-            fig_birth.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+            fig_birth.update_traces(hovertemplate='%{x}<br>%{y:,} trips (%{customdata[0]:.1f}%)<extra></extra>')
             most_common_count = birth_counts.loc[birth_counts['Year'] == most_common, 'Rides'].values[0]
             fig_birth.add_annotation(
                 x=0.0, y=-0.75,
