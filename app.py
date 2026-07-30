@@ -14,6 +14,32 @@ def format_duration(seconds):
     else:
         return f"{seconds / 3600:,.1f} hours"
 
+def sticky_pills(label, options, default, state_key, widget_key, **kwargs):
+    """Wraps st.pills so clicking the active pill can't deselect it to None."""
+    if state_key not in st.session_state:
+        st.session_state[state_key] = default
+    if st.session_state.get(widget_key) is None and widget_key in st.session_state:
+        st.session_state[widget_key] = st.session_state[state_key]
+
+    selection = st.pills(label, options, default=st.session_state[state_key],
+                          key=widget_key, **kwargs)
+    if selection is not None:
+        st.session_state[state_key] = selection
+    else:
+        selection = st.session_state[state_key]
+    return selection
+
+def render_caveats():
+    """Renders the Notes & Caveats expander. Called wherever there's spare space."""
+    with st.expander("Notes & Caveats"):
+        st.markdown("""
+This is a rebuild of the Udacity nd104 capstone project — the dataset and analysis subject were assigned; the dashboard design, UX decisions, and interactive architecture are original.
+
+- Optimized for desktop viewing. Mobile layout reorders content due to Streamlit's column-stacking behavior (known limitation, improvement planned for Streamlit v2.0).
+- Pill selectors were used in place of dropdown menus for improved touch accessibility — larger tap targets, all options visible without scrolling.
+- Charts show marginal distributions only; no cross-tabulation or causal relationships are implied between variables like month, day, and hour.
+""")
+        
 # ── CONSTANTS ───────────────────────────────────────────────────
 CITY_DATA = {
     'Chicago': 'chicago.csv',
@@ -72,23 +98,33 @@ header[data-testid="stHeader"] {
 </style>
 """, unsafe_allow_html=True)
 
-# ── TITLE ───────────────────────────────────────────────────────
+# ── TITLE (with back link tucked above, compact) ─────────────────
 title_col, toggle_col = st.columns([3, 1])
 with title_col:
-    st.title("US Bikeshare Data Explorer")
+    st.markdown(
+        "<div style='line-height:1.1;'>"
+        "<a href='https://edward-chen.com' style='font-size:0.75rem;color:#888;text-decoration:none;'>&larr; Back to Homepage</a>"
+        "<h1 style='font-size:1.9rem;margin-top:-8px;margin-bottom:0;line-height:1.1;'>US Bikeshare Data Explorer</h1>"
+        "</div>",
+        unsafe_allow_html=True
+    )
 with toggle_col:
-    st.markdown("<div style='padding-top:2rem;'>", unsafe_allow_html=True)
-    view = st.pills("", ["Trips", "Users"], default="Trips", label_visibility="collapsed")
+    st.markdown("<div style='padding-top:1.1rem;'>", unsafe_allow_html=True)
+    view = sticky_pills("", ["Trips", "Users"], "Trips",
+                         "active_view", "view_pills_widget", label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
 
 # ── FILTERS ─────────────────────────────────────────────────────
-city = st.pills("City", list(CITY_DATA.keys()), default="Chicago", label_visibility="collapsed")
+city = sticky_pills("City", list(CITY_DATA.keys()), "Chicago",
+                     "active_city", "city_pills_widget", label_visibility="collapsed")
 
 pill_col1, pill_col2 = st.columns([5, 7])
 with pill_col1:
-    month = st.pills("Month", ["All"] + MONTHS, default="All", label_visibility="collapsed")
+    month = sticky_pills("Month", ["All"] + MONTHS, "All",
+                          "active_month", "month_pills_widget", label_visibility="collapsed")
 with pill_col2:
-    day = st.pills("Day", ["All"] + DAYS, default="All", label_visibility="collapsed")
+    day = sticky_pills("Day", ["All"] + DAYS, "All",
+                        "active_day", "day_pills_widget", label_visibility="collapsed")
 
 # ── DATA LOADING & FILTERING ─────────────────────────────────────
 df = pd.read_csv(CITY_DATA[city])
@@ -149,7 +185,7 @@ if view == "Trips":
         st.markdown(SECTION_HEADER.format("Most Popular Month (by Trips)"), unsafe_allow_html=True)
         fig_month = px.bar(month_counts, x='Month', y='Rides', color='Color',
                            color_discrete_map='identity', category_orders={'Month': month_order})
-        fig_month.update_xaxes(tickangle=-60, title_text="")
+        fig_month.update_xaxes(tickangle=-60, title_text="", automargin=False)
         fig_month.update_yaxes(title_text="", range=[0, max_rides])
         fig_month.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                 paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
@@ -173,7 +209,7 @@ if view == "Trips":
         st.markdown(SECTION_HEADER.format("Most Popular Day of Week (by Trips)"), unsafe_allow_html=True)
         fig_day = px.bar(day_counts, x='Day', y='Rides', color='Color',
                          color_discrete_map='identity', category_orders={'Day': DAYS})
-        fig_day.update_xaxes(tickangle=-60, title_text="")
+        fig_day.update_xaxes(tickangle=-60, title_text="", automargin=False)
         fig_day.update_yaxes(title_text="", range=[0, max_rides])
         fig_day.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                               paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
@@ -195,13 +231,16 @@ if view == "Trips":
         fig_hour = px.bar(hour_counts, x='Hour Label', y='Rides', color='Color',
                           color_discrete_map='identity',
                           category_orders={'Hour Label': hour_counts['Hour Label'].tolist()})
-        fig_hour.update_xaxes(tickangle=-60, title_text="", dtick=2)
+        fig_hour.update_xaxes(tickangle=-60, title_text="", dtick=2, automargin=False)
         fig_hour.update_yaxes(title_text="", range=[0, max_rides])
         fig_hour.update_layout(height=250, yaxis=dict(range=[0, max_rides], domain=[0.15, 1.0]), showlegend=False, plot_bgcolor='rgba(0,0,0,0)',
                                paper_bgcolor='rgba(0,0,0,0)', margin=dict(l=10, r=10, t=10, b=80),
                                font=dict(family='DM Sans'))
         fig_hour.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
         st.plotly_chart(fig_hour, use_container_width=True, config=CHART_CONFIG)
+        st.markdown("<div style='padding-top:2.9rem;'>", unsafe_allow_html=True)
+        render_caveats()
+        st.markdown("</div>", unsafe_allow_html=True)
 
 elif view == "Users":
     
@@ -220,8 +259,11 @@ elif view == "Users":
     fig_user.update_traces(textposition='inside', texttemplate='%{percent:.1%}',
                            hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>')
 
-    # Gender pie chart
-    if 'Gender' in df.columns:
+    has_gender = 'Gender' in df.columns
+    has_birth_year = 'Birth Year' in df.columns
+
+    # User Type + Gender pie charts
+    if has_gender:
         gender_order = ['Male', 'Female', 'Not Specified']
         gender_data = df['Gender'].fillna('Not Specified').value_counts().reindex(gender_order).reset_index()
         gender_data.columns = ['Gender', 'Trips']
@@ -236,47 +278,56 @@ elif view == "Users":
                                  margin=dict(l=10, r=10, t=10, b=10), font=dict(family='DM Sans'))
         fig_gender.update_traces(textposition='inside', texttemplate='%{percent:.1%}',
                                  hovertemplate='%{label}<br>%{value:,} trips<br>%{percent:.1%}<extra></extra>')
+
         pie_col1, pie_col2 = st.columns(2)
         with pie_col1:
             st.markdown(SECTION_HEADER.format("User Types"), unsafe_allow_html=True)
             st.plotly_chart(fig_user, use_container_width=True, config=CHART_CONFIG)
         with pie_col2:
-            if 'Gender' in df.columns:
-                st.markdown(SECTION_HEADER.format("Gender"), unsafe_allow_html=True)
-                st.plotly_chart(fig_gender, use_container_width=True, config=CHART_CONFIG)
-    
-        # Birth year chart
-        st.markdown(SECTION_HEADER.format("Birth Year (By Trips)"), unsafe_allow_html=True)
-        earliest = int(df['Birth Year'].min())
-        most_recent = int(df['Birth Year'].max())
-        most_common = int(df['Birth Year'].mode()[0])
-        no_birth_year = df['Birth Year'].isnull().sum()
-
-        birth_counts = df['Birth Year'].dropna().astype(int).value_counts().sort_index().reset_index()
-        birth_counts.columns = ['Year', 'Rides']
-        birth_counts['Color'] = birth_counts['Year'].apply(lambda x: '#C4622D' if x == most_common else '#DBA088')
-
-        fig_birth = px.bar(birth_counts, x='Year', y='Rides', color='Color', color_discrete_map='identity')
-        fig_birth.update_xaxes(tickangle=-60, title_text="")
-        fig_birth.update_yaxes(title_text="", range=[0, birth_counts['Rides'].max() * 1.2])
-        fig_birth.update_layout(height=200, showlegend=False, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-                                margin=dict(l=10, r=10, t=30, b=10), font=dict(family='DM Sans'))
-        fig_birth.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
-        most_common_count = birth_counts.loc[birth_counts['Year'] == most_common, 'Rides'].values[0]
-        fig_birth.add_annotation(
-            x=0.0, y=-0.75,
-            xref='paper', yref='paper',
-            text=f"Earliest: {earliest}  ·  Most Recent: {most_recent}  ·  Not specified: {no_birth_year:,} trips",
-            showarrow=False,
-            xanchor='left', yanchor='top',
-            font=dict(size=10, color='#888', family='DM Sans'),
-            align='left'
-        )
-        fig_birth.add_annotation(x=most_common, y=most_common_count, text=str(most_common),
-                                 showarrow=False, yanchor='bottom', yshift=8,
-                                 font=dict(size=10, color='#C4622D', family='DM Sans'))
-        st.plotly_chart(fig_birth, config=CHART_CONFIG)
-
-        
+            st.markdown(SECTION_HEADER.format("Gender"), unsafe_allow_html=True)
+            st.plotly_chart(fig_gender, use_container_width=True, config=CHART_CONFIG)
     else:
-        st.markdown("<p style='color:#888;font-style:italic;'>Gender and birth year data not available for Washington.</p>", unsafe_allow_html=True)
+        st.markdown(SECTION_HEADER.format("User Types"), unsafe_allow_html=True)
+        st.plotly_chart(fig_user, use_container_width=True, config=CHART_CONFIG)
+
+    # Birth year chart
+    if has_birth_year:
+        birth_col1, birth_col2 = st.columns(2)
+        with birth_col1:
+            st.markdown(SECTION_HEADER.format("Birth Year (By Trips)"), unsafe_allow_html=True)
+            earliest = int(df['Birth Year'].min())
+            most_recent = int(df['Birth Year'].max())
+            most_common = int(df['Birth Year'].mode()[0])
+            no_birth_year = df['Birth Year'].isnull().sum()
+
+            birth_counts = df['Birth Year'].dropna().astype(int).value_counts().sort_index().reset_index()
+            birth_counts.columns = ['Year', 'Rides']
+            birth_counts['Color'] = birth_counts['Year'].apply(lambda x: '#C4622D' if x == most_common else '#DBA088')
+
+            fig_birth = px.bar(birth_counts, x='Year', y='Rides', color='Color', color_discrete_map='identity')
+            fig_birth.update_xaxes(tickangle=-60, title_text="")
+            fig_birth.update_yaxes(title_text="", range=[0, birth_counts['Rides'].max() * 1.2])
+            fig_birth.update_layout(height=200, showlegend=False, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+                                    margin=dict(l=10, r=10, t=30, b=10), font=dict(family='DM Sans'))
+            fig_birth.update_traces(hovertemplate='%{x}<br>%{y:,} trips<extra></extra>')
+            most_common_count = birth_counts.loc[birth_counts['Year'] == most_common, 'Rides'].values[0]
+            fig_birth.add_annotation(
+                x=0.0, y=-0.75,
+                xref='paper', yref='paper',
+                text=f"Earliest: {earliest}  ·  Most Recent: {most_recent}  ·  Not specified: {no_birth_year:,} trips",
+                showarrow=False,
+                xanchor='left', yanchor='top',
+                font=dict(size=10, color='#888', family='DM Sans'),
+                align='left'
+            )
+            fig_birth.add_annotation(x=most_common, y=most_common_count, text=str(most_common),
+                                     showarrow=False, yanchor='bottom', yshift=8,
+                                     font=dict(size=10, color='#C4622D', family='DM Sans'))
+            st.plotly_chart(fig_birth, config=CHART_CONFIG)
+        with birth_col2:
+            st.markdown("<div style='padding-top:2.9rem;'>", unsafe_allow_html=True)
+            render_caveats()
+            st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.markdown("<p style='color:#888;font-style:italic;'>Gender and birth year data not available for this city.</p>", unsafe_allow_html=True)
+        render_caveats()
