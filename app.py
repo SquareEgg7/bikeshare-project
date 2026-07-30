@@ -62,6 +62,7 @@ html, body, [class*="css"], p, div, span, label, input {
 }
 .stApp { background-color: #FAFAF8; }
 [data-testid="stIconMaterial"] { display: none !important; }
+[data-testid="stBaseButton-pillsActive"],
 button[data-variant="pills"][data-selected="true"],
 button[data-variant="pills"][aria-checked="true"] {
     background-color: #C4622D !important;
@@ -69,7 +70,6 @@ button[data-variant="pills"][aria-checked="true"] {
     color: white !important;
 }
 
-Why: B
 .stPlotlyChart {
     border-radius: 12px !important;
     overflow: hidden !important;
